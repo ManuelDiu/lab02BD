@@ -85,7 +85,7 @@ $$ LANGUAGE 'plpgsql';
 
 
 CREATE OR REPLACE FUNCTION revisarJugada(character)
-RETURNS text  AS $$
+RETURNS varchar  AS $$
 	DECLARE
 		contador_aciertos integer;
         
@@ -110,8 +110,7 @@ RETURNS text  AS $$
             RETURN NULL;
 		END IF;
 		        
-        SELECT n1, n2 , n3, n4, n5 , id_sorteo INTO res1, res2, res3, res4, res5, idsorteojugada
-		FROM resultados JOIN sorteos ON sorteos.id = resultados.id WHERE sorteos.abierto = false order by sorteos.fecha desc limit 1;
+        SELECT n1, n2 , n3, n4, n5 , id_sorteo INTO res1, res2, res3, res4, res5, idsorteojugada FROM resultados JOIN sorteos ON sorteos.id = resultados.id_sorteo WHERE sorteos.abierto = false order by sorteos.fecha desc limit 1;
         IF NOT FOUND THEN
             RAISE NOTICE 'Aun no se ha publicado el resultado de algun sorteo';
             RETURN NULL;
@@ -180,13 +179,15 @@ RETURNS trigger AS $$
 DECLARE
    ciCliente CHARACTER(8);
    sorteoId INT;
+   numeros integer[];
+   nrosRepetidos boolean;
+   contador integer;
 BEGIN
-
    SELECT ci INTO ciCliente FROM cuentas WHERE ci = NEW.ci;
-   IF NOT FOUND THEN
-    RAISE NOTICE 'El cliente no existe';
-	RETURN NULL;
-   END IF;
+	IF NOT FOUND THEN
+		RAISE NOTICE 'El cliente no existe';
+		RETURN NULL;
+	END IF;
    
 	SELECT id INTO sorteoId FROM sorteos WHERE abierto = true;
 	IF NOT FOUND THEN
@@ -196,32 +197,56 @@ BEGIN
 	NEW.id_sorteo = sorteoId;
 	NEW.fecha = CURRENT_DATE;
 	NEW.hora = CURRENT_TIME;
+	numeros[0] := NEW.n1;
+	numeros[1] := NEW.n2; 
+	numeros[2] := NEW.n3; 
+	numeros[3] := NEW.n4; 
+	numeros[4] := NEW.n5; 
+	nrosRepetidos = false;
+	contador = 0;
 
-   IF (NEW.n1 < 1  OR NEW.n1 > 45) THEN
-    RAISE NOTICE 'Nro 1 no comprende el rango entre 1y 45';
-	RETURN NULL;
-   END IF;
-   
-   IF (NEW.n2< 1  OR NEW.n2> 45) THEN
-    RAISE NOTICE 'Nro 2 o comprende el rango entre 1y 45';
-	RETURN NULL;
-   END IF;
-   
-   IF (NEW.n3 < 1  OR NEW.n3> 45) THEN
-    RAISE NOTICE 'Nro 3    no comprende el rango entre 1y 45';
-	RETURN NULL;
-   END IF;
-   
-   IF (NEW.n4 < 1  OR NEW.n4 > 45) THEN
-    RAISE NOTICE 'Nro 4 no comprende el rango entre 1y 45';
-	RETURN NULL;
-   END IF;
-   
-    IF (NEW.n5 < 1  OR NEW.n5 > 45) THEN
-    RAISE NOTICE 'Nro 5 no comprende el rango entre 1y 45';
-	RETURN NULL;
-   END IF;
-   
+	WHILE contador<=4 LOOP
+		FOR i IN 0..4 LOOP
+			IF (i != contador) THEN
+				IF (numeros[contador] = numeros[i]) THEN
+					nrosRepetidos = true;
+					exit;
+				END IF;
+			END IF;
+		END LOOP;
+		contador := contador+1;
+	END LOOP;
+
+	IF (nrosRepetidos = true) THEN 
+		RAISE NOTICE 'No se permiten numeros repetidos.';
+		RETURN NULL;
+	END IF;
+
+	IF (NEW.n1 < 1  OR NEW.n1 > 45) THEN
+		RAISE NOTICE 'Nro 1 no comprende el rango entre 1y 45';
+		RETURN NULL;
+	END IF;
+	
+	IF (NEW.n2< 1  OR NEW.n2> 45) THEN
+		RAISE NOTICE 'Nro 2 o comprende el rango entre 1y 45';
+		RETURN NULL;
+	END IF;
+	
+	IF (NEW.n3 < 1  OR NEW.n3> 45) THEN
+		RAISE NOTICE 'Nro 3    no comprende el rango entre 1y 45';
+		RETURN NULL;
+	END IF;
+
+	IF (NEW.n4 < 1  OR NEW.n4 > 45) THEN
+		RAISE NOTICE 'Nro 4 no comprende el rango entre 1y 45';
+		RETURN NULL;
+	END IF;
+	
+	IF (NEW.n5 < 1  OR NEW.n5 > 45) THEN
+		RAISE NOTICE 'Nro 5 no comprende el rango entre 1y 45';
+		RETURN NULL;
+	END IF;
+
    RETURN new;
 
 END;
@@ -273,8 +298,8 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
-Create trigger crearCuenta
-before insert or update on cuentas
+CREATE trigger crearCuenta
+BEFORE INSERT OR UPDATE ON cuentas
 for each row
 execute procedure crearCuenta();
 
