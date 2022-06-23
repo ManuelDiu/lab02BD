@@ -105,12 +105,11 @@ RETURNS text  AS $$
         cant_jugadas integer;
 		result_string VARCHAR;
 	BEGIN
-		IF ($1 IS NULL) THEN
+		IF ($1 IS NULL OR $1 !~ '[0-9]') THEN
 			RAISE NOTICE 'Por favor proporcione una CI.';
             RETURN NULL;
 		END IF;
-       
-        
+		        
         SELECT n1, n2 , n3, n4, n5 , id_sorteo INTO res1, res2, res3, res4, res5, idsorteojugada
 		FROM resultados JOIN sorteos ON sorteos.id = resultados.id WHERE sorteos.abierto = false order by sorteos.fecha desc limit 1;
         IF NOT FOUND THEN
@@ -181,7 +180,6 @@ RETURNS trigger AS $$
 DECLARE
    ciCliente CHARACTER(8);
    sorteoId INT;
-
 BEGIN
 
    SELECT ci INTO ciCliente FROM cuentas WHERE ci = NEW.ci;
@@ -190,34 +188,36 @@ BEGIN
 	RETURN NULL;
    END IF;
    
-   SELECT id INTO sorteoId FROM sorteos WHERE abierto = true;
-   IF NOT FOUND THEN
-    RAISE NOTICE 'No existe un sorteo Vigente';
-	RETURN NULL;
-   END IF;
- 
- 
-   IF NEW.n1 < 1  OR NEW.n1 > 45 THEN
+	SELECT id INTO sorteoId FROM sorteos WHERE abierto = true;
+	IF NOT FOUND THEN
+		RAISE NOTICE 'No existe un sorteo Vigente';
+		RETURN NULL;
+	END IF;
+	NEW.id_sorteo = sorteoId;
+	NEW.fecha = CURRENT_DATE;
+	NEW.hora = CURRENT_TIME;
+
+   IF (NEW.n1 < 1  OR NEW.n1 > 45) THEN
     RAISE NOTICE 'Nro 1 no comprende el rango entre 1y 45';
 	RETURN NULL;
    END IF;
    
-   IF NEW.n2< 1  OR NEW.n2> 45 THEN
+   IF (NEW.n2< 1  OR NEW.n2> 45) THEN
     RAISE NOTICE 'Nro 2 o comprende el rango entre 1y 45';
 	RETURN NULL;
    END IF;
    
-   IF NEW.n3 < 1  OR NEW.n3> 45 THEN
+   IF (NEW.n3 < 1  OR NEW.n3> 45) THEN
     RAISE NOTICE 'Nro 3    no comprende el rango entre 1y 45';
 	RETURN NULL;
    END IF;
    
-   IF NEW.n4 < 1  OR NEW.n4 > 45 THEN
+   IF (NEW.n4 < 1  OR NEW.n4 > 45) THEN
     RAISE NOTICE 'Nro 4 no comprende el rango entre 1y 45';
 	RETURN NULL;
    END IF;
    
-    IF NEW.n5 < 1  OR NEW.n5 > 45 THEN
+    IF (NEW.n5 < 1  OR NEW.n5 > 45) THEN
     RAISE NOTICE 'Nro 5 no comprende el rango entre 1y 45';
 	RETURN NULL;
    END IF;
