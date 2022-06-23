@@ -26,8 +26,7 @@ BEFORE INSERT ON sorteos
 FOR EACH ROW
 EXECUTE PROCEDURE validarSorteo();
 
-INSERT INTO sorteos (fecha, abierto) VALUES ('2022-06-12', false);
-delete from sorteos where abierto=true;
+
 
 
 
@@ -50,8 +49,6 @@ BEFORE INSERT ON resultados
 FOR EACH ROW
 EXECUTE PROCEDURE cerrarSorteo();
 
-INSERT INTO sorteos (fecha, abierto) VALUES ('2022-06-19', true);
-INSERT INTO resultados (fecha, id_sorteo, n1, n2, n3, n4, n5) VALUES ('2022-06-20', 03, 17, 25, 36, 45, 38);
 
 
 -- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -83,63 +80,8 @@ RETURNS void AS $$
 	END;
 $$ LANGUAGE 'plpgsql';
 
-select * from sorteos;
-INSERT INTO sorteos (fecha, abierto) VALUES ('2022-06-20', true);
-select realizarsorteo();
-select * from resultados;
 
 -- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-
-
--- Revisar Jugada. (DUDAS, SIN HACER)
-CREATE OR REPLACE FUNCTION revisarJugada(integer)
-RETURNS void AS $$
-	DECLARE
-		cant_3aciertos integer;
-		cant_4aciertos integer;
-		cant_5aciertos integer;
-		num1 integer;
-		num2 integer;
-		num3 integer;
-		num4 integer;
-		num5 integer;
-		idsorteojugada integer;
-		
-		res1 integer;
-		res2 integer;
-		res3 integer;
-		res4 integer;
-		res5 integer;
-		
-	BEGIN
-		IF ($1 IS NULL) THEN
-			RAISE NOTICE 'Por favor proporcione una CI.';
-			return;
-		END IF;
-		SELECT n1, n2 , n3, n4, n5, id_sorteo INTO num1, num2, num3, num4, num5, idsorteojugada
-		FROM jugadas WHERE ci = $1;
-		IF (not found) THEN
-			RAISE NOTICE 'No hay ninguna jugada registrada con esa CI.';
-			RETURN;
-		END IF;
-		SELECT n1, n2 , n3, n4, n5 INTO res1, res2, res3, res4, res5 
-		FROM resultados WHERE id_sorteo = idsorteojugada;
-		
-		
-		cant_3aciertos = 0; --serían variables anfitrionas
-		cant_4aciertos = 0;
-		cant_5aciertos = 0;
-
-		--...
-		--comparamos numeros y sumamos 1 a los contadores si coinciden 3 veces o más
-		--...
-
-		
-		
-		--...
-		--...
-	END;
-$$ LANGUAGE 'plpgsql';
 
 
 CREATE OR REPLACE FUNCTION revisarJugada(character)
@@ -231,6 +173,9 @@ $$
 LANGUAGE 'plpgsql';
 
 
+-- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+
 CREATE OR REPLACE FUNCTION validarJugadas()
 RETURNS trigger AS $$
 DECLARE
@@ -241,48 +186,99 @@ BEGIN
 
    SELECT ci INTO ciCliente FROM cuentas WHERE ci = NEW.ci;
    IF NOT FOUND THEN
-      RAISE 'El cliente no existe';
+    RAISE NOTICE 'El cliente no existe';
+	RETURN NULL;
    END IF;
    
    SELECT id INTO sorteoId FROM sorteos WHERE abierto = true;
    IF NOT FOUND THEN
-      RAISE 'No existe un sorteo Vigente';
+    RAISE NOTICE 'No existe un sorteo Vigente';
+	RETURN NULL;
    END IF;
  
  
    IF NEW.n1 < 1  OR NEW.n1 > 45 THEN
-        RAISE 'Nro 1 no comprende el rango entre 1y 45';
+    RAISE NOTICE 'Nro 1 no comprende el rango entre 1y 45';
+	RETURN NULL;
    END IF;
    
    IF NEW.n2< 1  OR NEW.n2> 45 THEN
-        RAISE 'Nro 2 o comprende el rango entre 1y 45';
+    RAISE NOTICE 'Nro 2 o comprende el rango entre 1y 45';
+	RETURN NULL;
    END IF;
    
    IF NEW.n3 < 1  OR NEW.n3> 45 THEN
-        RAISE 'Nro 3    no comprende el rango entre 1y 45';
+    RAISE NOTICE 'Nro 3    no comprende el rango entre 1y 45';
+	RETURN NULL;
    END IF;
    
    IF NEW.n4 < 1  OR NEW.n4 > 45 THEN
-        RAISE 'Nro 4 no comprende el rango entre 1y 45';
+    RAISE NOTICE 'Nro 4 no comprende el rango entre 1y 45';
+	RETURN NULL;
    END IF;
    
     IF NEW.n5 < 1  OR NEW.n5 > 45 THEN
-        RAISE 'Nro 5 no comprende el rango entre 1y 45';
+    RAISE NOTICE 'Nro 5 no comprende el rango entre 1y 45';
+	RETURN NULL;
    END IF;
    
-   
    RETURN new;
-
 
 END;
 $$ LANGUAGE 'plpgsql';
 
-
-
-CREATE OR REPLACE TRIGGER validar_jugadas 
+CREATE TRIGGER validar_jugadas 
 BEFORE INSERT ON jugadas FOR EACH ROW 
 EXECUTE PROCEDURE validarJugadas();
 
-15 6 10 13 1
 
+-- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+
+CREATE OR REPLACE FUNCTION crearCuenta()
+RETURNS trigger
+AS $$
+BEGIN
+	if (new.ci is null) then
+        RAISE NOTICE 'La cedula de identidad no puede estar vacia.';
+		RETURN NULL;
+    end if;
+	if (new.ci !~ '[0-9]') then
+		RAISE NOTICE 'Solo numeros por favor.';
+    	RETURN NULL;
+	end if;
+
+	if (age(new.fnacimiento) < interval '18 years') then
+        RAISE NOTICE 'El Usuario no puede ser menor de edad';
+		RETURN NULL;
+    end if;
+	if (new.nombre is null) then
+        RAISE NOTICE 'El nombre no puede ser vacio.';
+		RETURN NULL;
+    end if;
+	if (new.nombre SIMILAR TO '%[0-9@$?¡_.!]%') then 
+        RAISE NOTICE 'El campo nombre solo puede contener letras.';
+		RETURN NULL;
+    end if;
+	if (new.apellido is null) then
+        RAISE NOTICE 'El apellido no puede ser vacio.';
+		RETURN NULL;
+    end if;
+	
+	if (new.apellido SIMILAR TO '%[0-9@$?¡_.!]%') then
+        RAISE NOTICE 'El campo apellido solo puede contener letras.';
+		RETURN NULL;
+    end if;
+    return new;
+END;
+$$ LANGUAGE 'plpgsql';
+
+Create trigger crearCuenta
+before insert or update on cuentas
+for each row
+execute procedure crearCuenta();
+
+insert into cuentas (ci, nombre, apellido, fnacimiento) VALUES ('456546', 'asdasd', 'Diu', '02-04-2002');
+select * from cuentas;
+-- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
