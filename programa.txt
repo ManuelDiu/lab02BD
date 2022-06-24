@@ -1,0 +1,137 @@
+	  #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        char ci_cc[8];
+        char ci_realizjugada[8];
+        char ci_revjugada[8];
+        char name[30];
+        char surname[30];
+        char fechaN[50];
+        char fechaS[50];
+        char resultadoJugada[150];
+        int n1, n2, n3, n4, n5;
+EXEC SQL END DECLARE SECTION;
+
+int main() {
+EXEC SQL WHENEVER sqlerror sqlprint;
+    char numero;
+    while (true) {
+        system ("clear");
+        printf("Menu de Opciones\n");
+        printf("----------------\n");
+	  printf("1-Crear cuenta\n");
+        printf("2-Crear un sorteo\n");
+        printf("3-Realizar jugadas\n");
+        printf("4-Realizar un sorteo\n");
+        printf("5-Revisar jugada\n");
+        printf("6-Salir\n");
+        printf("\n");
+        printf("----------------\n");
+        printf("Ingrese el numero de la opcion deseada:\n");
+        scanf("%c", &numero);
+
+
+        switch (numero) {
+        case '1':
+                system ("clear");
+                printf("       - CREAR CUENTA -       \n");
+
+                printf("Ingrese cedula de identidad:\n");
+                scanf("%s", ci_cc);
+
+                system ("clear");
+                printf("Ingrese nombre:\n");
+                scanf("%s", name);
+
+                system ("clear");
+                printf("Ingrese apellido:\n");
+                scanf("%s", surname);
+
+                system ("clear");
+                printf("Ingrese fecha de nacimiento (formato: aaaa-mm-dd):\n");
+                scanf("%s", fechaN);
+
+                EXEC SQL CONNECT TO lab02@127.0.0.1:5432 USER postgres/"123";
+
+                EXEC SQL INSERT INTO cuentas (ci, fnacimiento, nombre, apellido) VALUES (:ci_cc, :fechaN, :name, :surname);
+                EXEC SQL COMMIT;
+                sleep(5);
+                EXEC SQL DISCONNECT ALL;
+                break;
+        case '2':
+                system ("clear");
+                printf("       - CREAR SORTEO -       \n");
+                printf("Ingrese fecha (formato: aaaa-mm-dd): \n");
+                scanf("%s", fechaS);
+
+                EXEC SQL CONNECT TO lab02@127.0.0.1:5432 USER postgres/"123";
+                EXEC SQL INSERT INTO sorteos (fecha, abierto) VALUES (:fechaS, true);
+                EXEC SQL COMMIT;
+                sleep(2);
+                EXEC SQL DISCONNECT ALL;
+                break;
+        case '3':
+                system ("clear");
+                printf("       - REALIZAR JUGADA -       \n");
+                printf("Ingrese cedula de identidad:\n");
+                scanf("%s", ci_realizjugada);
+
+                system ("clear");
+                printf("Ingrese el primer numero: ");
+                scanf("%d", &n1);
+
+                system ("clear");
+                printf("Ingrese el segundo numero: ");
+                scanf("%d", &n2);
+
+                system ("clear");
+                printf("Ingrese el tercer numero: ");
+                scanf("%d", &n3);
+
+                system ("clear");
+                printf("Ingrese el cuarto numero: ");
+                scanf("%d", &n4);
+
+		    system ("clear");
+                printf("Ingrese el quinto numero: ");
+                scanf("%d", &n5);
+
+                EXEC SQL CONNECT TO lab02@127.0.0.1:5432 USER postgres/"123";
+                EXEC SQL INSERT INTO jugadas (ci, n1, n2, n3, n4, n5) VALUES (:ci_realizjugada, :n1, :n2, :n3, :n4, :n5);
+                EXEC SQL COMMIT;
+                sleep(3);
+                EXEC SQL DISCONNECT ALL;
+                break;
+        case '4':
+                system ("clear");
+                printf("       - REALIZAR SORTEO -       \n");
+                EXEC SQL CONNECT TO lab02@127.0.0.1:5432 USER postgres/"123";
+                EXEC SQL SELECT realizarSorteo();
+                EXEC SQL COMMIT;
+                sleep(3);
+                EXEC SQL DISCONNECT ALL;
+                break;
+        case '5':
+                system ("clear");
+                printf("       - REVISAR JUGADA -       \n");
+                printf("Ingrese cedula de identidad:\n");
+                scanf("%s", ci_revjugada);
+
+
+                EXEC SQL CONNECT TO lab02@127.0.0.1:5432 USER postgres/"123";
+                EXEC SQL SELECT revisarJugada(:ci_revjugada) INTO :resultadoJugada;
+                EXEC SQL COMMIT;
+                printf("%s", resultadoJugada);
+
+                sleep(3);
+                EXEC SQL DISCONNECT ALL;
+                break;
+        default:
+                printf("ERROR: Valor invalido, vuelva a intentarlo. \n");
+                break;
+        }    
+    }
+EXEC SQL DISCONNECT ALL;
+}
