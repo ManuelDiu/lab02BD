@@ -28,8 +28,6 @@ EXECUTE PROCEDURE validarSorteo();
 
 
 
-
-
 -- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 -- Previo a la generación de resultados debe cerrar el sorteo para no recibir más apuestas.
